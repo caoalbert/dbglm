@@ -5,13 +5,13 @@ dbsample<-function(con,...)  {UseMethod("dbsample")}
   
 
 dbsample.tbl_monetdb <-function(tbl, n, N, variables, ... ){
-	dbGetQuery(tbl$src$con, dbplyr::build_sql("select ",dbplyr::ident(variables)," from (",dbplyr::sql(dbplyr::sql_render(tbl)), ") as foo sample ", as.integer(n)))
+  dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, "select ",dbplyr::ident(variables)," from (",dbplyr::sql(dbplyr::sql_render(tbl)), ") as foo sample ", as.integer(n)))
 }
- 
- dbsample.tbl_sql <-function(tbl, n, N, variables, ... ){
-	if (!is(tbl$src$con, 'SQLiteConnection')) stop("only implemented for RSQLite so far")
-	dbGetQuery(tbl$src$con, dbplyr::build_sql("select ",dbplyr::ident(variables)," from (", dbplyr::sql(dbplyr::sql_render(tbl)),  ") where abs(CAST(random() AS REAL))/9223372036854775808 <", as.double(n/N)))
 
+dbsample.tbl_sql <-function(tbl, n, N, variables, ... ){
+  if (!is(tbl$src$con, 'SQLiteConnection')) stop("only implemented for RSQLite so far")
+  dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, "select ",dbplyr::ident(variables)," from (", dbplyr::sql(dbplyr::sql_render(tbl)),  ") where abs(CAST(random() AS REAL))/9223372036854775808 <", as.double(n/N)))
+  
 } 
  
  
