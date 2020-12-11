@@ -63,9 +63,9 @@ score_mean<- function(df, model,fitname="_fit_",residname="_resid_") {
 	df <- df %>% tidypredict_to_column(model, vars=c(fitname,"",""))
 	
   parsedmodel<- parse_model(model)
-  labels <- parsedmodel 
+  labels1 <- parsedmodel 
   
-  labels <- labels[4:length(labels$general)]
+  labels <- 4:length(labels1$general)
   labels <- c("estimate", labels)
   all_terms <- parsedmodel %>%
     filter(.data$type == "term") %>%
