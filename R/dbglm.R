@@ -157,7 +157,8 @@ parse_model_old <- function(model) {
   }
   
   # TODO: figure out change add_variable
-  tidy <- add_variable(tidy, labels = "model", vals = class(model)[[1]])
+  tidy <- add_column(tidy,vals=NA)
+  tidy <- add_row(tidy, labels = "model", vals = class(model)[[1]])
   tidy <- add_variable(tidy, labels = "version", vals = "1.0")
   tidy <- add_variable(tidy, labels = "residual", vals = model$df.residual)
   
