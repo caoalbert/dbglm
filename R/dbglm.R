@@ -159,19 +159,19 @@ parse_model_old <- function(model) {
   # TODO: figure out change add_variable
   tidy <- add_column(tidy,vals=NA)
   tidy <- add_row(tidy, labels = "model", vals = class(model)[[1]])
-  tidy <- add_variable(tidy, labels = "version", vals = "1.0")
-  tidy <- add_variable(tidy, labels = "residual", vals = model$df.residual)
+  tidy <- add_row(tidy, labels = "version", vals = "1.0")
+  tidy <- add_row(tidy, labels = "residual", vals = as.character(model$df.residual))
   
   if (length(summary(model)$sigma^2) > 0) {
-    tidy <- add_variable(tidy, labels = "sigma2", vals = summary(model)$sigma^2)
+    tidy <- add_row(tidy, labels = "sigma2", vals = as.character(summary(model)$sigma^2))
   }
   
   if (!is.null(model$family$family)) {
-    tidy <- add_variable(tidy, labels = "family", vals = model$family$family)
+    tidy <- add_row(tidy, labels = "family", vals = as.character(model$family$family))
   }
   
   if (!is.null(model$family$link)) {
-    tidy <- add_variable(tidy, labels = "link", vals = model$family$link)
+    tidy <- add_row(tidy, labels = "link", vals = as.character(model$family$link))
   }
   
   offset <- model$call$offset
