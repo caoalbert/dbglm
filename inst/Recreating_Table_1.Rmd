@@ -1,0 +1,121 @@
+---
+title: "Recreating Table 1"
+output: pdf_document
+---
+
+```{r}
+library(dbglm)
+library(DBI)
+library(MonetDBLite)
+library(dplyr)
+library(dbplyr)
+library(purrr)
+library(tidyr) # Eventually just library(tidyverse)
+library(rlang)
+library(tibble)
+library(vctrs)
+library(tidypredict)
+library(RSQLite)
+```
+
+```{r}
+ms <- MonetDBLite::src_monetdblite("~/VEHICLE")
+monetdb.read.csv(ms$con, "Fleet30Nov2017.csv",tablename="vehicles",quote="",nrow.check=10000,best.effort=TRUE,lower.case.names=TRUE)
+vehicles<-tbl(ms,"vehicles")
+cars <- filter(vehicles, vehicle_type == "PASSENGER CAR/VAN") %>% 
+	mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
+	filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
+	compute()
+```
+
+```{r}
+# Full data
+t1<- system.time({
+  m1<-glm(isred~power_rating+number_of_seats+gross_vehicle_mass, data=cars, family = "binomial")
+})
+t1<- unname(t1[3])
+row.1<- c(unname(m1$coefficients), t1)
+m1<- summary(m1)
+row.2<- unname(m1$coefficients[,2])
+
+# Replicate 1 - monet
+t2<- system.time({
+  model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
+})
+t2<- unname(t2[3])
+row.3<- c(unname(model$hatbeta[,1]),t2)
+row.4<- unname(sqrt(diag(model$tildeV)))
+
+# Replicate 2 - monet
+t3<- system.time({
+  model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
+})
+t3<- unname(t3[3])
+row.5<- c(unname(model$hatbeta[,1]),t3)
+row.6<- unname(sqrt(diag(model$tildeV)))
+```
+
+
+```{r}
+vehicles<-read.csv("Fleet30Nov2017.csv")
+names(vehicles)<-tolower(names(vehicles))
+vehicles$power_rating<-as.numeric(as.character(vehicles$power_rating))
+vehicles$number_of_seats<-as.numeric(as.character(vehicles$number_of_seats))
+vehicles$number_of_axles<-as.numeric(as.character(vehicles$number_of_axles))
+
+sqlite<-dbDriver("SQLite")
+con<-dbConnect(sqlite,"nzcars.db")
+RSQLite:::initExtension(con)
+dbWriteTable(con,"vehicles",vehicles, overwrite = T)
+rm(vehicles)
+dbDisconnect(con)
+
+# analysis)
+
+sqlite<-dbDriver("SQLite")
+con<-dbConnect(sqlite,"nzcars.db")
+RSQLite:::initExtension(con)
+sqlitevehicles<-tbl(con,"vehicles")
+
+
+cars <- filter(sqlitevehicles, vehicle_type == "PASSENGER CAR/VAN") %>%
+	mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
+	filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
+	compute()
+```
+
+```{r}
+#sqlite replicate 1
+t4<- system.time({
+  sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
+})
+t4<- unname(t4[3])
+row.7<- c(unname(sqlitemodel$hatbeta[,1]),t4)
+row.8<- unname(sqrt(diag(sqlitemodel$tildeV)))
+
+#sqlite replicate 2
+t5<- system.time({
+  sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
+})
+t5<- unname(t5[3])
+row.9<- c(unname(sqlitemodel$hatbeta[,1]),t5)
+row.10<- unname(sqrt(diag(sqlitemodel$tildeV)))
+output<- rbind(row.1, row.2, row.3, row.4, row.5, row.6, row.7, row.8, row.9, row.10)
+output[c(2,4,6,8,10),]<- output[c(2,4,6,8,10),]/100
+output[,2]<- round(output[,2]*1000,2)
+output[,4]<- round(output[,4]*1000,2)
+output[,1]<- round(output[,1],2)
+output[,3]<- round(output[,3],2)
+output[,5]<- round(output[,5],2)
+output[c(2,4,6,8,10),5]<- rep("",5)
+output<- cbind(rep(c("\U03B2", "SEx100"),5), output)
+output<- cbind(c("Full Data", "", "Replicate 1", "", "Replicate 2", "", "Replicate 3","", "Replicate 4",""), output)
+output<- as.data.frame(output)
+colnames(output)<- c("", "", "Intercept", "Power/1000", "Seats", "Mass/1000", "Processing Time (s)")
+kable(output, row.names = F)
+```
+
+
+
+
+
