@@ -32,7 +32,6 @@ dbglm<-function(formula, family = binomial(), tbl, sd=FALSE,weights=.NotYetImple
   sdf<-dbsample(tbl2, n, N,  variables,...)
   
   model0 <- glm(formula=formula,family=family, data=sdf, ...)
-  
   if(sd){
   	  rval <- t(as.matrix(tbl2 %>% score_meansd(model0)))
   	  U <-rval[,1]*N
