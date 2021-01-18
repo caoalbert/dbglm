@@ -14,6 +14,7 @@ library(tidyr) # Eventually just library(tidyverse)
 library(rlang)
 library(tibble)
 library(vctrs)
+library(tidypredict)
 
 ms <- MonetDBLite::src_monetdblite("~/VEHICLE")
 monetdb.read.csv(ms$con, "Fleet30Nov2017.csv",tablename="vehicles",quote="",nrow.check=10000,best.effort=TRUE,lower.case.names=TRUE)
@@ -26,7 +27,6 @@ cars <- filter(vehicles, vehicle_type == "PASSENGER CAR/VAN") %>%
 system.time({
 model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 })
-
 
 ### Code for SQLite
 library(dbglm)
@@ -70,4 +70,7 @@ cars <- filter(sqlitevehicles, vehicle_type == "PASSENGER CAR/VAN") %>%
 system.time({
 sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 })
+
+sqrt(diag(sqlitemodel$hatV)*2917)
+
 
