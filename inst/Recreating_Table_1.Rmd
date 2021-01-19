@@ -17,6 +17,7 @@ library(vctrs)
 library(tidypredict)
 library(RSQLite)
 library(knitr)
+
 ```
 
 ```{r}
@@ -40,18 +41,31 @@ m1<- summary(m1)
 row.2<- unname(m1$coefficients[,2])
 
 # Replicate 1 - monet
-t2<- system.time({
+a1<- numeric(0)
+for(i in 1:10){
+  t2<- system.time({
   model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
-})
-t2<- unname(t2[3])
+  })
+  t2<- unname(t2[3])
+  a1<- c(a1, t2)
+  t2<- mean(a1)
+}
+
+model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 row.3<- c(unname(model$hatbeta[,1]),t2)
 row.4<- unname(sqrt(diag(model$hatV)))
 
 # Replicate 2 - monet
-t3<- system.time({
+a1<- numeric(0)
+for(i in 1:10){
+  t2<- system.time({
   model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
-})
-t3<- unname(t3[3])
+  })
+  t2<- unname(t2[3])
+  a1<- c(a1, t2)
+  t3<- mean(a1)
+}
+model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 row.5<- c(unname(model$hatbeta[,1]),t3)
 row.6<- unname(sqrt(diag(model$hatV)))
 ```
@@ -87,18 +101,30 @@ cars <- filter(sqlitevehicles, vehicle_type == "PASSENGER CAR/VAN") %>%
 
 ```{r}
 #sqlite replicate 1
-t4<- system.time({
+a1<- numeric(0)
+for(i in 1:10){
+  t2<- system.time({
   sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
-})
-t4<- unname(t4[3])
+  })
+  t2<- unname(t2[3])
+  a1<- c(a1, t2)
+  t4<- mean(a1)
+}
+sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 row.7<- c(unname(sqlitemodel$hatbeta[,1]),t4)
 row.8<- unname(sqrt(diag(sqlitemodel$hatV)))
 
 #sqlite replicate 2
-t5<- system.time({
+a1<- numeric(0)
+for(i in 1:10){
+  t2<- system.time({
   sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
-})
-t5<- unname(t5[3])
+  })
+  t2<- unname(t2[3])
+  a1<- c(a1, t2)
+  t5<- mean(a1)
+}
+sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 row.9<- c(unname(sqlitemodel$hatbeta[,1]),t5)
 row.10<- unname(sqrt(diag(sqlitemodel$hatV)))
 output<- rbind(row.1, row.2, row.3, row.4, row.5, row.6, row.7, row.8, row.9, row.10)
