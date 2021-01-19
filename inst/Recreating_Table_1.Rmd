@@ -17,7 +17,6 @@ library(vctrs)
 library(tidypredict)
 library(RSQLite)
 library(knitr)
-
 ```
 
 ```{r}
@@ -139,6 +138,7 @@ output<- cbind(rep(c("\U03B2", "SEx100"),5), output)
 output<- cbind(c("Full Data", "", "Replicate 1", "", "Replicate 2", "", "Replicate 3","", "Replicate 4",""), output)
 output<- as.data.frame(output)
 colnames(output)<- c("", "", "Intercept", "Power/1000", "Seats", "Mass/1000", "Processing Time (s)")
+output$Method<- c("","","MonetDB", "", "MonetDB", "", "SQLite", "", "SQLite","")
 kable(output, row.names = F)
 ```
 
