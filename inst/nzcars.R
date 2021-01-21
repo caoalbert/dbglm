@@ -74,7 +74,8 @@ sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=car
 sqrt(diag(sqlitemodel$hatV)*2917)
 
 
-# Data Setup for ducklibrary(duckdb)
+# Data Setup for duckDB
+library(duckdb)
 con_duck<- dbConnect(duckdb::duckdb(), "duck")
 vehicles<- read.csv("Fleet30Nov2017.csv")
 names(vehicles)<-tolower(names(vehicles))
@@ -86,5 +87,5 @@ cars<- tbl(con_duck, "cars")
 cars1 <- filter(cars, vehicle_type == "PASSENGER CAR/VAN") %>% 
   mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
   filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
-  compute()DB
+  compute()
 
