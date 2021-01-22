@@ -19,6 +19,11 @@ dbsample.tbl_df <-function(tbl, n, N, variables, ... ){
 	tbl[sample(N,n),]	
 }
  
+dbsample.tbl_duckdb_connection<- function(tbl, n, N, variables, ... ){
+  a<- dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, dbplyr::sql(dbplyr::sql_render(tbl))))
+  a[sample(N,n),]
+}
+
    
 dbglm<-function(formula, family = binomial(), tbl, sd=FALSE,weights=.NotYetImplemented(), subset=.NotYetImplemented(), ...){   
 	
@@ -29,12 +34,8 @@ dbglm<-function(formula, family = binomial(), tbl, sd=FALSE,weights=.NotYetImple
 
   N<- pull(summarise(tbl2, n()))
   n<-round(N^(5/9))
-  if(is(tbl$src$con, 'duckdb_connection') == T){
-    a<- dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, dbplyr::sql(dbplyr::sql_render(tbl))))
-    sdf<- a[sample(N,n),]
-  }else{
-    sdf<-dbsample(tbl2, n, N,  variables,...)
-  }
+  sdf<-dbsample(tbl2, n, N,  variables,...)
+
 
   model0 <- glm(formula=formula,family=family, data=sdf, ...)
   if(sd){
