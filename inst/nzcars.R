@@ -88,4 +88,6 @@ cars1 <- filter(cars, vehicle_type == "PASSENGER CAR/VAN") %>%
   mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
   filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
   compute()
+model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars1)
+
 
