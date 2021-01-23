@@ -20,7 +20,7 @@ dbsample.tbl_df <-function(tbl, n, N, variables, ... ){
 }
  
 dbsample.tbl_duckdb_connection<- function(tbl, n, N, variables, ... ){
-  dbGetQuery(tbl2$src$con, dbplyr::build_sql(con = tbl2$src$con, dbplyr::build_sql(con = tbl2$src$con, dbplyr::sql(dbplyr::sql_render(tbl2)))), n = n)
+  dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, dbplyr::build_sql(con = tbl$src$con, dbplyr::sql(dbplyr::sql_render(tbl)))), n = n)
 }
 
    
