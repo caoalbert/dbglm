@@ -17,6 +17,7 @@ library(vctrs)
 library(tidypredict)
 library(RSQLite)
 library(knitr)
+library(duckdb)
 ```
 
 ```{r}
@@ -81,16 +82,12 @@ sqlite<-dbDriver("SQLite")
 con<-dbConnect(sqlite,"nzcars.db")
 RSQLite:::initExtension(con)
 dbWriteTable(con,"vehicles",vehicles, overwrite = T)
-rm(vehicles)
 dbDisconnect(con)
-
-# analysis)
 
 sqlite<-dbDriver("SQLite")
 con<-dbConnect(sqlite,"nzcars.db")
 RSQLite:::initExtension(con)
 sqlitevehicles<-tbl(con,"vehicles")
-
 
 cars <- filter(sqlitevehicles, vehicle_type == "PASSENGER CAR/VAN") %>%
 	mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
@@ -126,19 +123,65 @@ for(i in 1:10){
 sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
 row.9<- c(unname(sqlitemodel$hatbeta[,1]),t5)
 row.10<- unname(sqrt(diag(sqlitemodel$hatV)))
-output<- rbind(row.1, row.2, row.3, row.4, row.5, row.6, row.7, row.8, row.9, row.10)
-output[c(2,4,6,8,10),]<- output[c(2,4,6,8,10),]*100
+```
+
+```{r}
+con_duck<- dbConnect(duckdb::duckdb(), "duck")
+names(vehicles)<-tolower(names(vehicles))
+dbWriteTable(con_duck, "cars", vehicles, overwrite = T)
+cars<- tbl(con_duck, "cars")
+cars1 <- filter(cars, vehicle_type == "PASSENGER CAR/VAN") %>% 
+  mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
+  filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
+  compute()
+```
+
+```{r}
+#duckDB replicate 1
+a1<- numeric(0)
+for(i in 1:10){
+  t2<- system.time({
+  sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars1)
+  })
+  t2<- unname(t2[3])
+  a1<- c(a1, t2)
+  t6<- mean(a1)
+}
+duckmodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars1)
+row.11<- c(unname(duckmodel$hatbeta[,1]),t6)
+row.12<- unname(sqrt(diag(duckmodel$hatV)))
+
+#duckDB replicate 2
+a1<- numeric(0)
+for(i in 1:10){
+  t2<- system.time({
+  sqlitemodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars1)
+  })
+  t2<- unname(t2[3])
+  a1<- c(a1, t2)
+  t7<- mean(a1)
+}
+duckmodel<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars1)
+row.13<- c(unname(duckmodel$hatbeta[,1]),t7)
+row.14<- unname(sqrt(diag(duckmodel$hatV)))
+
+```
+
+
+```{r}
+output<- rbind(row.1, row.2, row.3, row.4, row.5, row.6, row.7, row.8, row.9, row.10, row.11, row.12, row.13, row.14)
+output[c(2,4,6,8,10,12,14),]<- output[c(2,4,6,8,10,12,14),]*100
 output[,2]<- round(output[,2]*1000,2)
 output[,4]<- round(output[,4]*1000,2)
 output[,1]<- round(output[,1],2)
 output[,3]<- round(output[,3],2)
 output[,5]<- round(output[,5],2)
-output[c(2,4,6,8,10),5]<- rep("",5)
-output<- cbind(rep(c("\U03B2", "SEx100"),5), output)
-output<- cbind(c("Full Data", "", "Replicate 1", "", "Replicate 2", "", "Replicate 3","", "Replicate 4",""), output)
+output[c(2,4,6,8,10,12,14),5]<- rep("",7)
+output<- cbind(rep(c("\U03B2", "SEx100"),7), output)
+output<- cbind(c("Full Data", "", "Replicate 1", "", "Replicate 2", "", "Replicate 3","", "Replicate 4","","Replicate 5", "", "Replicate 6",""), output)
 output<- as.data.frame(output)
 colnames(output)<- c("", "", "Intercept", "Power/1000", "Seats", "Mass/1000", "Processing Time (s)")
-output$Method<- c("","","MonetDB", "", "MonetDB", "", "SQLite", "", "SQLite","")
+output$Method<- c("","","MonetDB", "", "MonetDB", "", "SQLite", "", "SQLite","","duckDB","","duckDB","")
 kable(output, row.names = F)
 ```
 
