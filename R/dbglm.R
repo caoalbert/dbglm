@@ -20,7 +20,7 @@ dbsample.tbl_df <-function(tbl, n, N, variables, ... ){
 }
  
 dbsample.tbl_duckdb_connection<- function(tbl, n, N, variables, ... ){
-  dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, dbplyr::build_sql(con = tbl$src$con, dbplyr::sql(dbplyr::sql_render(tbl)))), n = n)
+  dbGetQuery(tbl$src$con, build_sql(con = tbl$src$con, dbplyr::sql_render(tbl), build_sql(con = tbl$src$con, " ORDER BY RANDOM() LIMIT ", as.integer(n))))
 }
 
    
