@@ -37,7 +37,7 @@ library(dbplyr)
 
 # data setup
 
-vehicles<-readr::read_csv("Fleet30Nov2017.csv")
+vehicles<-readr::read_csv("Fleet30Nov2017.csv") # TODO: read_csv_rsqlite() ???
 names(vehicles)<-tolower(names(vehicles))
 vehicles$power_rating<-as.numeric(as.character(vehicles$power_rating))
 vehicles$number_of_seats<-as.numeric(as.character(vehicles$number_of_seats))
@@ -76,8 +76,8 @@ sqrt(diag(sqlitemodel$hatV)*2917)
 
 # Data Setup for duckDB
 library(duckdb)
-con_duck<- dbConnect(duckdb::duckdb(), "duck")
-vehicles<- read.csv("Fleet30Nov2017.csv")
+con_duck<- dbConnect(duckdb::duckdb(), "duck") 
+vehicles<- read.csv("Fleet30Nov2017.csv") # TODO: duckdb::read_csv_duckdb()
 names(vehicles)<-tolower(names(vehicles))
 vehicles$power_rating<-as.numeric(as.character(vehicles$power_rating))
 vehicles$number_of_seats<-as.numeric(as.character(vehicles$number_of_seats))
