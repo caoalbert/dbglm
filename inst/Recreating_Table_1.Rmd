@@ -135,7 +135,7 @@ row.10<- bb
 
 ```{r}
 con_duck<- dbConnect(duckdb::duckdb())
-duckdb_read_csv(con_duck, "Fleet30Nov2017a.csv", "~/Desktop/dbglm/inst/Fleet30Nov2017a.csv", quote = "", lower.case.names=TRUE, check.names = T)
+duckdb_read_csv(con_duck, "Fleet30Nov2017a.csv", "Fleet30Nov2017a.csv", quote = "", lower.case.names=TRUE, check.names = T)
 cars<- dbReadTable(con_duck, "Fleet30Nov2017a.csv")
 cars1 <- filter(cars, vehicle_type == "PASSENGER CAR/VAN") %>% 
   mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
