@@ -37,7 +37,7 @@ library(dbplyr)
 
 # data setup
 
-vehicles<-readr::read_csv("Fleet30Nov2017.csv")
+vehicles<-readr::read_csv("Fleet30Nov2017.csv", quote = "")
 names(vehicles)<-tolower(names(vehicles))
 vehicles$power_rating<-as.numeric(as.character(vehicles$power_rating))
 vehicles$number_of_seats<-as.numeric(as.character(vehicles$number_of_seats))
