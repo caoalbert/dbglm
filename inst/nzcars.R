@@ -20,47 +20,6 @@ ms <- MonetDBLite::src_monetdblite("~/VEHICLE")
 monetdb.read.csv(ms$con, "Fleet30Nov2017.csv",tablename="vehicles",quote="",nrow.check=10000,best.effort=TRUE,lower.case.names=TRUE)
 vehicles<-tbl(ms,"vehicles")
 cars <- filter(vehicles, vehicle_type == "PASSENGER CAR/VAN") %>% 
-	mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
-	filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
-	compute()
-
-system.time({
-model<-dbglm(isred~power_rating+number_of_seats+gross_vehicle_mass,tbl=cars)
-})
-
-### Code for SQLite
-library(dbglm)
-library(RSQLite)
-library(dplyr)
-library(dbplyr)
-
-
-# data setup
-
-<<<<<<< HEAD
-vehicles<-readr::read_csv("Fleet30Nov2017.csv", quote = "")
-##
-## Download data from figshare
-## https://figshare.com/articles/NZ_vehicles_database/5971471
-##
-### Code for MonetDB
-
-library(dbglm)
-library(DBI)
-library(MonetDBLite)
-library(dplyr)
-library(dbplyr)
-library(purrr)
-library(tidyr) # Eventually just library(tidyverse)
-library(rlang)
-library(tibble)
-library(vctrs)
-library(tidypredict)
-
-ms <- MonetDBLite::src_monetdblite("~/VEHICLE")
-monetdb.read.csv(ms$con, "Fleet30Nov2017.csv",tablename="vehicles",quote="",nrow.check=10000,best.effort=TRUE,lower.case.names=TRUE)
-vehicles<-tbl(ms,"vehicles")
-cars <- filter(vehicles, vehicle_type == "PASSENGER CAR/VAN") %>% 
   mutate(isred=ifelse(basic_colour=="RED",1,0)) %>% 
   filter(number_of_seats >1 & number_of_seats < 7) %>% filter(number_of_axles==2) %>%
   compute()
