@@ -1,9 +1,5 @@
-
-
-   
 dbsample<-function(con,...)  {UseMethod("dbsample")}
   
-
 dbsample.tbl_monetdb <-function(tbl, n, N, variables, ... ){
   dbGetQuery(tbl$src$con, dbplyr::build_sql(con = tbl$src$con, "select ",dbplyr::ident(variables)," from (",dbplyr::sql(dbplyr::sql_render(tbl)), ") as foo sample ", as.integer(n)))
 }
@@ -14,7 +10,6 @@ dbsample.tbl_sql <-function(tbl, n, N, variables, ... ){
   
 } 
  
- 
 dbsample.tbl_df <-function(tbl, n, N, variables, ... ){
 	tbl[sample(N,n),]	
 }
@@ -24,7 +19,10 @@ dbsample.data.frame <-function(tbl, n, N, variables, ... ){
 }
  
 dbsample.tbl_duckdb_connection<- function(tbl, n, N, variables, ... ){
-  dbGetQuery(tbl$src$con, build_sql(con = tbl$src$con, dbplyr::sql_render(tbl), build_sql(con = tbl$src$con, " ORDER BY RANDOM() LIMIT ", as.integer(n))))
+  dbGetQuery(tbl$src$con, build_sql(con = tbl$src$con, dbnplyr::sql_render(tbl), build_sql(con = tbl$src$con, " ORDER BY RANDOM() LIMIT ", as.integer(n))))
+}
+dbsample.tbl_BigQueryConnection<- function(tbl, n, N, variables, ... ){
+  dbGetQuery(tbl$src$con, build_sql(con = tbl$src$con, dbplyr::sql_render(tbl), build_sql(con = tbl$src$con, " ORDER BY rand() LIMIT ", as.integer(n))))
 }
 
    
@@ -34,11 +32,18 @@ dbglm<-function(formula, family = binomial(), tbl, sd=FALSE,weights=.NotYetImple
   variables<-all.vars(formula)
   if (!(all(variables %in% colnames(tbl)))) stop("variables must be in data tbl")
   tbl2<-select(tbl,!!!syms(all.vars(formula)))
-
-  N<- pull(summarise(tbl2, n()))
-  n<-round(N^(5/9))
-  sdf<-dbsample(tbl2, n, N,  variables,...)
-
+  if(class(tbl2)[1] == "tbl_BigQueryConnection"){
+    n_ob<- tbl %>% summarise(n = n())
+    N<- as.numeric(as.data.frame(n_ob)[1,])
+    n<- round(N^(5/9))
+    sdf<-dbsample(tbl2, n, N,  variables,...)
+    isBQ<- T
+  }else{
+    N<- pull(summarise(tbl2, n()))
+    n<-round(N^(5/9))
+    sdf<-dbsample(tbl2, n, N,  variables,...)
+    isBQ<- F
+  }
 
   model0 <- glm(formula=formula,family=family, data=sdf, ...)
   if(sd){
@@ -56,7 +61,7 @@ dbglm<-function(formula, family = binomial(), tbl, sd=FALSE,weights=.NotYetImple
   	  list(beta0,beta1,beta2,V1,V2)
 
   } else {
-  		U <- t(as.matrix(tbl2 %>% score_mean(model0)))*N
+  		U <- t(as.matrix(tbl2 %>% score_mean(model0, pass = isBQ)))*N
   		beta0<-coef(model0)
   		V0<- vcov(model0)
   		V1<-vcov(model0)*(n/N)
@@ -196,7 +201,7 @@ parse_model_old <- function(model) {
 }
 
 
-score_mean<- function(df, model,fitname="_fit_",residname="_resid_") {
+score_mean<- function(df, model,fitname="_fit_",residname="_resid_", pass) {
   df <- df %>% tidypredict_to_column(model, vars=c(fitname,"",""))
   
   parsedmodel<- parse_model_old(model)
@@ -242,10 +247,26 @@ score_mean<- function(df, model,fitname="_fit_",residname="_resid_") {
   
   names(f)<-paste0("_u",seq_along(coef(model)))
   
-  df %>% 
-    mutate(!!!f) %>%
-    summarise(!!!map(paste0("_u",seq_along(coef(model))), function(x) expr(mean(!!sym(x))))) %>%
-    collect()
+  if(pass == T){
+    df<- df %>% mutate(!!!f)
+    df<- as.data.frame(df)
+    out<- numeric(0)
+    indi<- seq((length(coef(model))+2), ncol(df))
+    for(i in indi){
+      va<- mean(as.numeric(df[,i]))
+      out<- c(out, va)
+    }
+    
+    as.data.frame(t(as.data.frame(out)))
+    
+  }else{
+    
+    df %>% 
+      mutate(!!!f) %>%
+      summarise(!!!map(paste0("_u",seq_along(coef(model))), function(x) expr(mean(!!sym(x))))) %>%
+      collect()
+    
+  }
 }
 
 score_meansd<- function(df, model,fitname="_fit_",residname="_resid_") {
